@@ -7,8 +7,9 @@ import (
 	"net/http"
 	"path/filepath"
 
-	"github.com/dhanekom/bookings/pkg/config"
-	"github.com/dhanekom/bookings/pkg/models"
+	"github.com/dhanekom/bookings/internal/config"
+	"github.com/dhanekom/bookings/internal/models"
+	"github.com/justinas/nosurf"
 )
 
 var functions = template.FuncMap{}
@@ -18,13 +19,13 @@ func NewTemplates(a *config.AppConfig) {
 	app = a
 }
 
-func AddDefaultData(td *models.TemplateData) *models.TemplateData {
-
+func AddDefaultData(td *models.TemplateData, r *http.Request) *models.TemplateData {
+	td.CSRFToken = nosurf.Token(r)
 	return td
 }
 
 // RenderTemplate renders templates using html/template
-func RenderTemplate(w http.ResponseWriter, tmpl string, td *models.TemplateData) {
+func RenderTemplate(w http.ResponseWriter, r *http.Request, tmpl string, td *models.TemplateData) {
 	var tc map[string]*template.Template
 	if app.UseCache {
 		tc = app.TemplateCache
@@ -41,7 +42,7 @@ func RenderTemplate(w http.ResponseWriter, tmpl string, td *models.TemplateData)
 	//_ = t.Execute(buf, nil)
 	//_, err = buf.WriteTo(w)
 
-	td = AddDefaultData(td)
+	td = AddDefaultData(td, r)
 	err := t.Execute(w, td)
 	if err != nil {
 		fmt.Println("Error writing templates to browser")

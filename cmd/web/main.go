@@ -6,9 +6,9 @@ import (
 	"time"
 
 	"github.com/alexedwards/scs/v2"
-	"github.com/dhanekom/bookings/pkg/config"
-	"github.com/dhanekom/bookings/pkg/handlers"
-	"github.com/dhanekom/bookings/pkg/render"
+	"github.com/dhanekom/bookings/internal/config"
+	"github.com/dhanekom/bookings/internal/handlers"
+	"github.com/dhanekom/bookings/internal/render"
 )
 
 const portNumber = ":8080"
@@ -19,7 +19,7 @@ var session *scs.SessionManager
 func main() {
 	tc, err := render.CreateTemplateCache()
 	if err != nil {
-		log.Fatal("unable to create template cache")
+		log.Fatal("unable to create template cache", err)
 	}
 
 	app.InProduction = false
