@@ -1,6 +1,8 @@
 package main
 
 import (
+	"encoding/gob"
+	"fmt"
 	"log"
 	"net/http"
 	"time"
@@ -8,6 +10,7 @@ import (
 	"github.com/alexedwards/scs/v2"
 	"github.com/dhanekom/bookings/internal/config"
 	"github.com/dhanekom/bookings/internal/handlers"
+	"github.com/dhanekom/bookings/internal/models"
 	"github.com/dhanekom/bookings/internal/render"
 )
 
@@ -17,9 +20,28 @@ var app config.AppConfig
 var session *scs.SessionManager
 
 func main() {
-	tc, err := render.CreateTemplateCache()
+	err := run()
 	if err != nil {
-		log.Fatal("unable to create template cache", err)
+		log.Fatal(err)
+	}
+
+	log.Printf("Starting server on port %s\n", portNumber)
+	srv := http.Server{
+		Addr:    portNumber,
+		Handler: routes(&app),
+	}
+
+	log.Fatal(srv.ListenAndServe())
+}
+
+func run() error {
+	gob.Register(models.Reservation{})
+
+	app.TemplatePath = "./templates"
+
+	tc, err := render.CreateTemplateCache(app.TemplatePath)
+	if err != nil {
+		return fmt.Errorf("unable to create template cache - %s", err)
 	}
 
 	app.InProduction = false
@@ -37,11 +59,5 @@ func main() {
 	render.NewTemplates(&app)
 	handlers.NewRepo(&app)
 
-	log.Printf("Starting server on port %s\n", portNumber)
-	srv := http.Server{
-		Addr:    portNumber,
-		Handler: routes(&app),
-	}
-
-	log.Fatal(srv.ListenAndServe())
+	return nil
 }

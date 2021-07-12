@@ -1,0 +1,23 @@
+mode: set
+github.com/dhanekom/bookings/internal/render/render.go:18.40,20.2 1 1
+github.com/dhanekom/bookings/internal/render/render.go:22.84,28.2 5 1
+github.com/dhanekom/bookings/internal/render/render.go:31.105,33.18 2 1
+github.com/dhanekom/bookings/internal/render/render.go:39.2,40.9 2 1
+github.com/dhanekom/bookings/internal/render/render.go:44.2,46.16 3 1
+github.com/dhanekom/bookings/internal/render/render.go:50.2,50.12 1 1
+github.com/dhanekom/bookings/internal/render/render.go:33.18,35.3 1 0
+github.com/dhanekom/bookings/internal/render/render.go:35.8,37.3 1 1
+github.com/dhanekom/bookings/internal/render/render.go:40.9,42.3 1 1
+github.com/dhanekom/bookings/internal/render/render.go:46.16,48.3 1 0
+github.com/dhanekom/bookings/internal/render/render.go:54.86,58.16 3 1
+github.com/dhanekom/bookings/internal/render/render.go:62.2,62.29 1 1
+github.com/dhanekom/bookings/internal/render/render.go:83.2,83.21 1 1
+github.com/dhanekom/bookings/internal/render/render.go:58.16,60.3 1 0
+github.com/dhanekom/bookings/internal/render/render.go:62.29,65.17 3 1
+github.com/dhanekom/bookings/internal/render/render.go:69.3,70.17 2 1
+github.com/dhanekom/bookings/internal/render/render.go:73.3,73.23 1 1
+github.com/dhanekom/bookings/internal/render/render.go:80.3,80.21 1 1
+github.com/dhanekom/bookings/internal/render/render.go:65.17,67.4 1 0
+github.com/dhanekom/bookings/internal/render/render.go:70.17,72.4 1 0
+github.com/dhanekom/bookings/internal/render/render.go:73.23,75.18 2 1
+github.com/dhanekom/bookings/internal/render/render.go:75.18,77.5 1 0
