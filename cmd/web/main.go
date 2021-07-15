@@ -5,11 +5,13 @@ import (
 	"fmt"
 	"log"
 	"net/http"
+	"os"
 	"time"
 
 	"github.com/alexedwards/scs/v2"
 	"github.com/dhanekom/bookings/internal/config"
 	"github.com/dhanekom/bookings/internal/handlers"
+	"github.com/dhanekom/bookings/internal/helpers"
 	"github.com/dhanekom/bookings/internal/models"
 	"github.com/dhanekom/bookings/internal/render"
 )
@@ -18,6 +20,8 @@ const portNumber = ":8080"
 
 var app config.AppConfig
 var session *scs.SessionManager
+var infoLog *log.Logger
+var errorLog *log.Logger
 
 func main() {
 	err := run()
@@ -46,6 +50,12 @@ func run() error {
 
 	app.InProduction = false
 
+	infoLog = log.New(os.Stdout, "INFO\n", log.Ldate|log.Ltime)
+	app.InfoLog = infoLog
+
+	errorLog = log.New(os.Stdout, "ERROR\n", log.Ldate|log.Ltime|log.Lshortfile)
+	app.ErrorLog = errorLog
+
 	session = scs.New()
 	session.Lifetime = 24 * time.Hour
 	session.Cookie.Persist = true
@@ -58,6 +68,7 @@ func run() error {
 	app.TemplateCache = tc
 	render.NewTemplates(&app)
 	handlers.NewRepo(&app)
+	helpers.NewHelpers(&app)
 
 	return nil
 }

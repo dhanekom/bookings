@@ -52,10 +52,12 @@ func (f *Form) MinLength(field string, length int) bool {
 }
 
 // IsEmail checks for valid email address
-func (f *Form) IsEmail(field string) {
+func (f *Form) IsEmail(field string) bool {
 	if !govalidator.IsEmail(f.Get(field)) {
 		f.Errors.Add(field, "Invalid email address")
+		return false
 	}
+	return true
 }
 
 // Has check if form field is in post an not empty
