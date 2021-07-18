@@ -10,6 +10,7 @@ import (
 
 	"github.com/alexedwards/scs/v2"
 	"github.com/dhanekom/bookings/internal/config"
+	"github.com/dhanekom/bookings/internal/driver"
 	"github.com/dhanekom/bookings/internal/handlers"
 	"github.com/dhanekom/bookings/internal/helpers"
 	"github.com/dhanekom/bookings/internal/models"
@@ -24,10 +25,11 @@ var infoLog *log.Logger
 var errorLog *log.Logger
 
 func main() {
-	err := run()
+	db, err := run()
 	if err != nil {
 		log.Fatal(err)
 	}
+	defer db.SQL.Close()
 
 	log.Printf("Starting server on port %s\n", portNumber)
 	srv := http.Server{
@@ -38,22 +40,26 @@ func main() {
 	log.Fatal(srv.ListenAndServe())
 }
 
-func run() error {
+func run() (*driver.DB, error) {
 	gob.Register(models.Reservation{})
+	gob.Register(models.User{})
+	gob.Register(models.Room{})
+	gob.Register(models.Restriction{})
+	gob.Register(models.RoomRestriction{})
 
 	app.TemplatePath = "./templates"
 
 	tc, err := render.CreateTemplateCache(app.TemplatePath)
 	if err != nil {
-		return fmt.Errorf("unable to create template cache - %s", err)
+		return nil, fmt.Errorf("unable to create template cache - %s", err)
 	}
 
 	app.InProduction = false
 
-	infoLog = log.New(os.Stdout, "INFO\n", log.Ldate|log.Ltime)
+	infoLog = log.New(os.Stdout, "INFO\t", log.Ldate|log.Ltime)
 	app.InfoLog = infoLog
 
-	errorLog = log.New(os.Stdout, "ERROR\n", log.Ldate|log.Ltime|log.Lshortfile)
+	errorLog = log.New(os.Stdout, "ERROR\t", log.Ldate|log.Ltime|log.Lshortfile)
 	app.ErrorLog = errorLog
 
 	session = scs.New()
@@ -64,11 +70,20 @@ func run() error {
 
 	app.Session = session
 
+	// connect to database
+	log.Println("connecting to database...")
+	db, err := driver.ConnectSQL("host=localhost port=5432 dbname=bookings user=pos password=pos")
+	if err != nil {
+		log.Fatal("cannot connet to database! Dying...")
+	}
+
+	log.Println("connected to database")
+
 	app.UseCache = false
 	app.TemplateCache = tc
-	render.NewTemplates(&app)
-	handlers.NewRepo(&app)
+	render.NewRendered(&app)
+	handlers.NewRepo(&app, db)
 	helpers.NewHelpers(&app)
 
-	return nil
+	return db, nil
 }

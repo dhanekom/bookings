@@ -48,7 +48,7 @@ func getRoutes() http.Handler {
 
 	app.UseCache = false
 	app.TemplateCache = tc
-	render.NewTemplates(&app)
+	render.NewRendered(&app)
 	NewRepo(&app)
 
 	mux := chi.NewRouter()
