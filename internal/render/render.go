@@ -6,14 +6,23 @@ import (
 	"html/template"
 	"net/http"
 	"path/filepath"
+	"time"
 
 	"github.com/dhanekom/bookings/internal/config"
 	"github.com/dhanekom/bookings/internal/models"
 	"github.com/justinas/nosurf"
 )
 
-var functions = template.FuncMap{}
+var functions = template.FuncMap{
+	"humanDate": humanDate,
+}
+
 var app *config.AppConfig
+
+// humanDate time in YYYY-MM-DD format
+func humanDate(t time.Time) string {
+	return t.Format("2006-01-02")
+}
 
 // NewRendered sets the config for the template package
 func NewRendered(a *config.AppConfig) {
@@ -25,6 +34,9 @@ func AddDefaultData(td *models.TemplateData, r *http.Request) *models.TemplateDa
 	td.Error = app.Session.PopString(r.Context(), "error")
 	td.Warning = app.Session.PopString(r.Context(), "warning")
 	td.CSRFToken = nosurf.Token(r)
+	if app.Session.Exists(r.Context(), "user_id") {
+		td.IsAuthenticated = 1
+	}
 	return td
 }
 

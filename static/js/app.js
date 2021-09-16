@@ -128,12 +128,6 @@ function addCheckAvailability(roomID, CSRFToken){
           minDate: new Date(),
         });
       },
-      preConfirm: () => {
-        return [
-          document.getElementById('start').value,
-          document.getElementById('end').value
-        ]
-      },
       didOpen: () => {
         document.getElementById('start').removeAttribute('disabled');
         document.getElementById('end').removeAttribute('disabled');

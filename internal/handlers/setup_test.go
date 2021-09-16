@@ -5,12 +5,14 @@ import (
 	"log"
 	"net/http"
 	"os"
+	"testing"
 	"time"
 
 	"github.com/alexedwards/scs/v2"
 	"github.com/dhanekom/bookings/internal/config"
 	"github.com/dhanekom/bookings/internal/models"
 	"github.com/dhanekom/bookings/internal/render"
+	"github.com/dhanekom/bookings/internal/repository/dbrepo"
 	"github.com/go-chi/chi"
 	"github.com/go-chi/chi/middleware"
 	"github.com/justinas/nosurf"
@@ -19,7 +21,7 @@ import (
 var app config.AppConfig
 var session *scs.SessionManager
 
-func getRoutes() http.Handler {
+func TestMain(m *testing.M) {
 	gob.Register(models.Reservation{})
 
 	app.TemplatePath = "../../templates"
@@ -27,7 +29,6 @@ func getRoutes() http.Handler {
 	tc, err := render.CreateTemplateCache(app.TemplatePath)
 	if err != nil {
 		log.Printf("unable to create template cache - %s", err)
-		return nil
 	}
 
 	app.InProduction = false
@@ -46,11 +47,30 @@ func getRoutes() http.Handler {
 
 	app.Session = session
 
+	mailChan := make(chan models.MailData)
+	app.MailChan = mailChan
+	defer close(mailChan)
+
+	listenForMail()
+
 	app.UseCache = false
 	app.TemplateCache = tc
 	render.NewRendered(&app)
-	NewRepo(&app)
+	myDBRepo := dbrepo.NewTestDBRepo(&app)
+	NewRepo(&app, myDBRepo)
 
+	os.Exit(m.Run())
+}
+
+func listenForMail() {
+	go func() {
+		for {
+			<-app.MailChan
+		}
+	}()
+}
+
+func getRoutes() http.Handler {
 	mux := chi.NewRouter()
 
 	mux.Use(middleware.Recoverer)

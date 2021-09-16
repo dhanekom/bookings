@@ -5,6 +5,7 @@ import (
 	"log"
 
 	"github.com/alexedwards/scs/v2"
+	"github.com/dhanekom/bookings/internal/models"
 )
 
 // AppConfig holds the application config
@@ -16,4 +17,5 @@ type AppConfig struct {
 	InProduction  bool
 	Session       *scs.SessionManager
 	TemplatePath  string
+	MailChan      chan models.MailData
 }

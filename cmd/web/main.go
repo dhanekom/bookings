@@ -2,6 +2,7 @@ package main
 
 import (
 	"encoding/gob"
+	"flag"
 	"fmt"
 	"log"
 	"net/http"
@@ -15,6 +16,7 @@ import (
 	"github.com/dhanekom/bookings/internal/helpers"
 	"github.com/dhanekom/bookings/internal/models"
 	"github.com/dhanekom/bookings/internal/render"
+	"github.com/dhanekom/bookings/internal/repository/dbrepo"
 )
 
 const portNumber = ":8080"
@@ -30,6 +32,18 @@ func main() {
 		log.Fatal(err)
 	}
 	defer db.SQL.Close()
+
+	defer close(app.MailChan)
+	listenForMail()
+
+	msg := models.MailData{
+		To:      "john@do.ca",
+		From:    "me@here.com",
+		Subject: "Some subject",
+		Content: "Hallo <strong>world</strong>",
+	}
+
+	app.MailChan <- msg
 
 	log.Printf("Starting server on port %s\n", portNumber)
 	srv := http.Server{
@@ -47,6 +61,26 @@ func run() (*driver.DB, error) {
 	gob.Register(models.Restriction{})
 	gob.Register(models.RoomRestriction{})
 
+	// read flags
+	inProduction := flag.Bool("production", true, "Application is in production")
+	userCache := flag.Bool("cache", true, "Use template cache")
+	dbHost := flag.String("dbhost", "localhost", "Database host")
+	dbName := flag.String("dbname", "", "Database name")
+	dbUser := flag.String("dbuser", "", "Database user")
+	dbPass := flag.String("dbpass", "", "Database password")
+	dbPort := flag.String("dbport", "5432", "Database post")
+	dbSSL := flag.String("dbssl", "disable", "Database sslsettings (disable, prefer, require)")
+
+	flag.Parse()
+
+	if *dbName == "" || *dbUser == "" {
+		fmt.Println("Missing required parameters")
+		os.Exit(1)
+	}
+
+	mailChan := make(chan models.MailData)
+	app.MailChan = mailChan
+
 	app.TemplatePath = "./templates"
 
 	tc, err := render.CreateTemplateCache(app.TemplatePath)
@@ -54,7 +88,8 @@ func run() (*driver.DB, error) {
 		return nil, fmt.Errorf("unable to create template cache - %s", err)
 	}
 
-	app.InProduction = false
+	app.InProduction = *inProduction
+	app.UseCache = *userCache
 
 	infoLog = log.New(os.Stdout, "INFO\t", log.Ldate|log.Ltime)
 	app.InfoLog = infoLog
@@ -72,17 +107,19 @@ func run() (*driver.DB, error) {
 
 	// connect to database
 	log.Println("connecting to database...")
-	db, err := driver.ConnectSQL("host=localhost port=5432 dbname=bookings user=pos password=pos")
+	// host=localhost port=5432 dbname=bookings user=pos password=pos
+	connectionString := fmt.Sprintf("host=%s port=%s dbname=%s user=%s password=%s sslmode=%s", *dbHost, *dbPort, *dbName, *dbUser, *dbPass, *dbSSL)
+	db, err := driver.ConnectSQL(connectionString)
 	if err != nil {
 		log.Fatal("cannot connet to database! Dying...")
 	}
 
 	log.Println("connected to database")
 
-	app.UseCache = false
 	app.TemplateCache = tc
+	myDBRepo := dbrepo.NewPostgresRepo(db.SQL, &app)
 	render.NewRendered(&app)
-	handlers.NewRepo(&app, db)
+	handlers.NewRepo(&app, myDBRepo)
 	helpers.NewHelpers(&app)
 
 	return db, nil
